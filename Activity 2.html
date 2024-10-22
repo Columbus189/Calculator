@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            max-width: 600px;
+            margin: auto;
+        }
+        .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .row:hover {
+            background-color: #f9f9f9; /* Highlight effect on hover */
+        }
+        label {
+            flex-basis: 50%;
+            padding-right: 10px;
+            font-size: 16px; /* Uniform font size for labels */
+        }
+        input[type="number"] {
+            width: 80px;
+            padding: 5px;
+            text-align: center;
+            font-size: 16px; /* Uniform font size for inputs */
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            transition: color 0.3s; /* Smooth transition for color changes */
+        }
+        #upload {
+            border: 2px dashed green; /* Green dotted lines */
+            padding: 10px;
+            text-align: center;
+            margin-top: 20px;
+            cursor: pointer;
+            width: 250px; /* Fixed width for upload box */
+            font-size: 16px; /* Uniform font size for upload box */
+        }
+        #uploadContainer {
+            margin-bottom: 20px; /* Space below the upload box */
+        }
+        .result-text {
+            font-size: 16px; /* Uniform font size for results */
+            margin-top: 10px; /* Space above each result */
+            line-height: 1.5; /* Improve spacing between lines */
+        }
+        .green {
+            color: green; /* Change text color to green */
+        }
+        .light-red {
+            color: red; /* Change text color to red */
+        }
+        .spacing {
+            margin-right: 20px; /* Adjusted space between inputs */
+        }
+        .buttons {
+            margin-bottom: 20px;
+        }
+        .buttons button {
+            margin-right: 10px;
+            padding: 8px 12px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Activity Calculator</h2>
+
+    <!-- PDF Upload Section -->
+    <div id="uploadContainer">
+        <div id="upload" onclick="document.getElementById('fileInput').click();">
+            Upload your training plan in PDF
+            <input type="file" id="fileInput" accept=".pdf" style="display: none;" onchange="handleFile(event)">
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Total Players Input -->
+        <div class="row">
+            <label for="totalPlayers">Number of Total Players:</label>
+            <input type="number" id="totalPlayers" placeholder="Enter total players" value="20" oninput="calculateTotalActivity()">
+        </div>
+
+        <!-- Buttons to add/remove drills -->
+        <div class="buttons">
+            <button onclick="addDrill()">+ Add Drill</button>
+            <button onclick="removeDrill()">- Remove Drill</button>
+        </div>
+
+        <!-- Drill Inputs -->
+        <div id="drillsContainer">
+            <!-- Drill inputs will be generated here -->
+        </div>
+
+        <div id="result" class="result-text"></div>
+        <div id="totalLength" class="result-text"></div>
+        <div id="percentageActivity" class="result-text"></div>
+        <div id="neededActivity" class="result-text"></div>
+    </div>
+
+    <script>
+        let drillCount = 6; // Initial number of drills
+
+        // Display initial drills
+        window.onload = function() {
+            for (let i = 1; i <= drillCount; i++) {
+                addDrill(i);
+            }
+            calculateTotalActivity(); // Display initial calculations
+        };
+
+        // Handle PDF upload
+        function handleFile(event) {
+            const file = event.target.files[0];
+            if (file) {
+                alert(`File uploaded: ${file.name}`);
+            }
+        }
+
+        // Add a new drill row
+        function addDrill(index = null) {
+            const drillIndex = index || ++drillCount; // Use passed index or increment drillCount
+            const drillRow = document.createElement('div');
+            drillRow.className = 'row';
+            drillRow.id = `drillRow${drillIndex}`;
+            drillRow.innerHTML = `
+                <label for="activePlayers${drillIndex}">Active Players (Drill ${drillIndex}):</label>
+                <input type="number" id="activePlayers${drillIndex}" value="6" class="spacing" oninput="calculateTotalActivity()">
+                <label for="drillLength${drillIndex}">Length of Drill ${drillIndex} (min):</label>
+                <input type="number" id="drillLength${drillIndex}" value="10" oninput="calculateTotalActivity()">
+            `;
+            document.getElementById('drillsContainer').appendChild(drillRow);
+        }
+
+        // Remove the last drill row
+        function removeDrill() {
+            if (drillCount > 1) {
+                const lastDrillRow = document.getElementById(`drillRow${drillCount}`);
+                lastDrillRow.remove();
+                drillCount--;
+                calculateTotalActivity(); // Recalculate after removal
+            }
+        }
+
+        // Calculation logic
+        function calculateActivity(totalPlayers, activePlayers, drillLength) {
+            if (totalPlayers > 0 && activePlayers > 0 && drillLength > 0) {
+                return (activePlayers / totalPlayers) * drillLength;
+            }
+            return 0;
+        }
+
+        function calculateTotalActivity() {
+            const totalPlayers = document.getElementById("totalPlayers").value;
+
+            let totalActivity = 0;
+            let totalLength = 0;
+
+            for (let i = 1; i <= drillCount; i++) {
+                const activePlayers = document.getElementById(`activePlayers${i}`).value;
+                const drillLength = document.getElementById(`drillLength${i}`).value;
+
+                // Calculate activity for each drill
+                const activity = calculateActivity(totalPlayers, activePlayers, drillLength);
+                totalActivity += activity;
+                totalLength += parseInt(drillLength); // Sum lengths of drills
+            }
+
+            // Display the total activity and total length
+            const resultDiv = document.getElementById("result");
+            resultDiv.innerHTML = `Total Activity Time: <span class="${totalActivity > 0 ? (totalActivity > 18 ? 'green' : (totalActivity === 18 ? 'black' : 'light-red')) : 'black'}">${totalActivity.toFixed(2)} minutes</span>`;
+            const totalLengthDiv = document.getElementById("totalLength");
+            totalLengthDiv.innerHTML = `Total Length of Drills: <span class="black">${totalLength} minutes</span>`; // Keep total length text black
+
+            // Calculate percentage of activity
+            const percentageActivity = ((totalActivity / totalLength) * 100).toFixed(2);
+            const percentageDiv = document.getElementById("percentageActivity");
+            percentageDiv.innerHTML = `Total Percentage Activity during training: <span class="${percentageActivity >= 40 ? 'green' : 'light-red'}">${percentageActivity}%</span>`;
+
+            // Calculate needed activity to reach 40%
+            const neededActivity = Math.max(0, 40 - percentageActivity);
+            const neededActivityDiv = document.getElementById("neededActivity");
+            neededActivityDiv.innerHTML = `You need an additional <span class="light-red">${neededActivity.toFixed(2)}%</span> activity to reach the 40% recommended by the Swiss Hockey Federation.`;
+
+            // Update input text colors based on the values
+            updateInputColors(totalPlayers);
+        }
+
+        function updateInputColors(totalPlayers) {
+            for (let i = 1; i <= drillCount; i++) {
+                const activePlayers = document.getElementById(`activePlayers${i}`).value;
+
+                // Determine the color based on the percentage of active players
+                const percentageActivePlayers = (activePlayers / totalPlayers) * 100;
+
+                // Change input text color based on percentage
+                if (percentageActivePlayers < 40) {
+                    document.getElementById(`activePlayers${i}`).style.color = 'red'; // Red for below 40%
+                } else {
+                    document.getElementById(`activePlayers${i}`).style.color = 'green'; // Green for 40% and above
+                }
+            }
+        }
+    </script>
+
+</body>
+</html>
